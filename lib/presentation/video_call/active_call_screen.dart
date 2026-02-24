@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../service_locator.dart';
 import '../../data/services/webrtc_handler.dart';
 import 'widgets/video_view.dart';
@@ -44,6 +45,22 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   }
 
   Future<void> _initWebRTC() async {
+    // Ruxsatlarni tekshirish
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.camera,
+      Permission.microphone,
+    ].request();
+
+    if (statuses[Permission.camera] != PermissionStatus.granted ||
+        statuses[Permission.microphone] != PermissionStatus.granted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Kamera yoki mikrofon ruxsati berilmadi!")),
+        );
+      }
+      return;
+    }
+
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
 
