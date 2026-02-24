@@ -140,7 +140,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     super.dispose();
   }
 
-  void _toggleMic() {
+  void _toggleMic() async {
     setState(() => _isMicOn = !_isMicOn);
 
     if (_isMicOn) {
@@ -148,6 +148,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       // Biz realStt ni ishlatishga harakat qilamiz, agar init bo'lgan bo'lsa
       try {
         await activeStt.startListening();
+        setState(() => _myText = "Eshitilmoqda..."); 
+        
         _sttSub = activeStt.textStream.listen((text) {
           if (text.trim().isEmpty) return;
           setState(() => _myText = text);
@@ -161,6 +163,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       } catch (e) {
         // Fallback to mock if real fails
         stt.startListening();
+        setState(() => _myText = "Eshitilmoqda (Mock)...");
         _sttSub = stt.textStream.listen((text) {
            setState(() => _myText = text);
            _handler?.sendSpeechText(text, fromLang: widget.myLang, toLang: widget.remoteLang);
@@ -172,6 +175,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       realStt.stopListening();
       stt.stopListening();
       tts.stop();
+      setState(() => _myText = "");
     }
   }
 
@@ -228,23 +232,48 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
             ),
           ),
 
-          // Men gapirgan matn (STT, pastda)
-          if (_myText.isNotEmpty)
+          // Men gapirgan matn (STT, pastda - yanada ko'rinadigan qildik)
+          if (_isMicOn || _myText.isNotEmpty)
             Positioned(
-              bottom: 140,
-              left: 16,
-              right: 16,
+              bottom: 120,
+              left: 20,
+              right: 20,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.withOpacity(0.8), Colors.blueAccent.withOpacity(0.6)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))
+                  ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    const Text("Men:", style: TextStyle(color: Colors.white70, fontSize: 11)),
-                    Text(_myText, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                    if (_isMicOn && _myText == "Eshitilmoqda...")
+                      const Padding(
+                        padding: EdgeInsets.only(right: 12),
+                        child: SizedBox(
+                          width: 15,
+                          height: 15,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        ),
+                      )
+                    else
+                      const Icon(Icons.mic, color: Colors.white70, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _myText.isEmpty && _isMicOn ? "Gapiring..." : _myText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -7,6 +7,11 @@ import 'domain/services/stt_service.dart';
 import 'domain/services/tts_service.dart';
 import 'domain/services/translation_service.dart';
 
+// Exporting types for convenience
+export 'domain/services/stt_service.dart';
+export 'domain/services/tts_service.dart';
+export 'domain/services/translation_service.dart';
+
 // SSH orqali ulanib turgan serverning ichki IP manzili
 const String kServerHost = "192.168.100.132";
 const String kServerHttpUrl = "http://$kServerHost:8000";
@@ -24,5 +29,5 @@ class ServiceLocator {
 STTService get stt => ServiceLocator.sttService;
 VoskSTTService get realStt => ServiceLocator.realSttService;
 TTSService get tts => ServiceLocator.ttsService;
-TranslationService get translation => ServiceLocator.translationService;
+TranslationService get translator => ServiceLocator.translationService; // Named as 'translator' to match app usage
 VoskModelManager get voskManager => ServiceLocator.voskModelManager;
