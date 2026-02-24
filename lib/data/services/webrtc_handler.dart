@@ -47,16 +47,25 @@ class WebRTCHandler {
       }
     };
 
-    _localStream = await navigator.mediaDevices.getUserMedia({
-      "audio": true,
-      "video": {"facingMode": "user"},
-    });
+    try {
+      _localStream = await navigator.mediaDevices.getUserMedia({
+        "audio": true,
+        "video": {
+          "facingMode": "user",
+          "width": {"min": "640", "ideal": "1280", "max": "1920"},
+          "height": {"min": "480", "ideal": "720", "max": "1080"},
+        },
+      });
+      print("Kamera oqimi olindi: ${_localStream!.id}");
 
-    _localStream!.getTracks().forEach((track) {
-      _peerConnection!.addTrack(track, _localStream!);
-    });
+      _localStream!.getTracks().forEach((track) {
+        _peerConnection!.addTrack(track, _localStream!);
+      });
 
-    localRenderer.srcObject = _localStream;
+      localRenderer.srcObject = _localStream;
+    } catch (e) {
+      print("Kamera yoki mikrofonni yoqishda xato: $e");
+    }
   }
 
   void _onSignalingMessage(message) async {

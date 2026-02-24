@@ -83,6 +83,11 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     };
 
     await _handler!.init(_localRenderer);
+    
+    // Video oqimi ulangach, UI ni yangilash shart
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
