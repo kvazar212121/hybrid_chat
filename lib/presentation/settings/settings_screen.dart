@@ -4,6 +4,7 @@ import 'widgets/profile_header.dart';
 import 'widgets/settings_section.dart';
 import 'widgets/settings_tile.dart';
 import 'widgets/language_selector_sheet.dart';
+import 'vosk_model_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -79,14 +80,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: const Icon(Icons.download, color: Colors.pinkAccent, size: 20),
                 ),
                 title: const Text('Til modellarini yuklash', style: TextStyle(color: AppColors.textPrimary)),
-                subtitle: const Text('Hajmi: ~200MB (Ona tili uchun)', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                trailing: _isDownloading
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                    : ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-                        onPressed: _downloadModel,
-                        child: const Text('Yuklash', style: TextStyle(fontSize: 12)),
-                      ),
+                subtitle: const Text('Vosk STT offline modellari (EN/RU)', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                trailing: const Icon(Icons.arrow_forward_ios, color: AppColors.textSecondary, size: 16),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VoskModelScreen())),
               ),
             ],
           ),

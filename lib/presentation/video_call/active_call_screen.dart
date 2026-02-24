@@ -83,11 +83,50 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     };
 
     await _handler!.init(_localRenderer);
+
+    // Vosk STT modelini tekshirish
+    await _setupRealSTT();
     
     // Video oqimi ulangach, UI ni yangilash shart
     if (mounted) {
       setState(() {});
     }
+  }
+
+  Future<void> _setupRealSTT() async {
+    // Tilga mos model nomini topish
+    String modelName = "";
+    if (widget.myLang == "en") {
+      // Avval kattasini tekshiramiz, keyin kichigini
+      if (await voskManager.isModelDownloaded("vosk-model-en-us-0.22")) {
+        modelName = "vosk-model-en-us-0.22";
+      } else if (await voskManager.isModelDownloaded("vosk-model-small-en-us-0.15")) {
+        modelName = "vosk-model-small-en-us-0.15";
+      }
+    } else if (widget.myLang == "ru") {
+      if (await voskManager.isModelDownloaded("vosk-model-ru-0.42")) {
+        modelName = "vosk-model-ru-0.42";
+      } else if (await voskManager.isModelDownloaded("vosk-model-small-ru-0.22")) {
+        modelName = "vosk-model-small-ru-0.22";
+      }
+    }
+
+    if (modelName.isNotEmpty) {
+      try {
+        final path = await voskManager.getModelLocalPath(modelName);
+        if (path != null) {
+          await realStt.initModel(path);
+          print("Haqiqiy STT ishga tushdi: $modelName");
+        }
+      } catch (e) {
+        print("Vosk STT yuklashda xato: $e");
+      }
+    }
+  }
+
+  STTService get _currentStt {
+    // Agar model yuklangan bo'lsa realStt ni qaytaramiz
+    return realStt.isListening || realStt.textStream != null ? realStt : stt;
   }
 
   @override
@@ -105,21 +144,32 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     setState(() => _isMicOn = !_isMicOn);
 
     if (_isMicOn) {
-      stt.startListening();
-      _sttSub = stt.textStream.listen((text) {
-        if (text.trim().isEmpty) return;
-        setState(() => _myText = text);
+      final activeStt = realStt; 
+      // Biz realStt ni ishlatishga harakat qilamiz, agar init bo'lgan bo'lsa
+      try {
+        await activeStt.startListening();
+        _sttSub = activeStt.textStream.listen((text) {
+          if (text.trim().isEmpty) return;
+          setState(() => _myText = text);
 
-        // Men gapirganim → server orqali tarjima bo'lib narigi tomonga ketadi
-        _handler?.sendSpeechText(
-          text,
-          fromLang: widget.myLang,
-          toLang: widget.remoteLang,
-        );
-      });
+          _handler?.sendSpeechText(
+            text,
+            fromLang: widget.myLang,
+            toLang: widget.remoteLang,
+          );
+        });
+      } catch (e) {
+        // Fallback to mock if real fails
+        stt.startListening();
+        _sttSub = stt.textStream.listen((text) {
+           setState(() => _myText = text);
+           _handler?.sendSpeechText(text, fromLang: widget.myLang, toLang: widget.remoteLang);
+        });
+      }
     } else {
       _sttSub?.cancel();
       _sttSub = null;
+      realStt.stopListening();
       stt.stopListening();
       tts.stop();
     }
